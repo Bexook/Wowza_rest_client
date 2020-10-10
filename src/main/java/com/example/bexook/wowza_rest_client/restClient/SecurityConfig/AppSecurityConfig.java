@@ -1,21 +1,24 @@
 package com.example.bexook.wowza_rest_client.restClient.SecurityConfig;
 
+import com.example.bexook.wowza_rest_client.restClient.UserRepositorySecurity.UserDBConnection.ApplicationUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
 
 @Configuration
 public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
 
+
     @Autowired
-   private PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private ApplicationUserDetailsService applicationUserDetailsService;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -23,7 +26,7 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
                 .csrf()
                 .disable()
                 .authorizeRequests()
-                .antMatchers("/login")
+                .antMatchers("/login","/register_user")
                 .permitAll()
                 .anyRequest()
                 .authenticated()
@@ -31,18 +34,14 @@ public class AppSecurityConfig extends WebSecurityConfigurerAdapter {
                 .httpBasic();
 
     }
+
+
+
     @Bean
-    @Override
-    protected UserDetailsService userDetailsService() {
-        return new InMemoryUserDetailsManager(
-                User.builder()
-                .username("Andrew")
-                .password(passwordEncoder.getPasswordEncoder().encode("123"))
-                .roles("NONE")
-                .build()
-        );
+    public AuthenticationProvider authenticationProvider(){
+        DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
+        daoAuthenticationProvider.setUserDetailsService(applicationUserDetailsService);
+        daoAuthenticationProvider.setPasswordEncoder(passwordEncoder.getPasswordEncoder());
+        return daoAuthenticationProvider;
     }
-
-
-
 }
